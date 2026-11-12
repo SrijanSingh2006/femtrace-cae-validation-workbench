@@ -411,7 +411,7 @@ export default function App() {
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
-              <button key={item.key} className={"navItem " + (tab === item.key ? "active" : "")} onClick={() => setTab(item.key)}>
+              <button key={item.key} title={item.label} aria-label={item.label} className={"navItem " + (tab === item.key ? "active" : "")} onClick={() => setTab(item.key)}>
                 <Icon size={17} strokeWidth={1.9} />
                 <span>{item.label}</span>
                 {item.count ? <b>{item.count}</b> : null}

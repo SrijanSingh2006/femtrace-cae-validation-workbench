@@ -284,3 +284,228 @@ tbody tr:last-child td { border-bottom: 0; }
 .comparisonPanel > .panelDescription { margin-bottom: 13px; }
 .deltaUp { color: #b24f49; font-weight: 700; }
 .deltaDown { color: #39835e; font-weight: 700; }
+
+/* Refined responsive visual system */
+:root {
+  color-scheme: light;
+  background: #f4f7f5;
+  color: #172c26;
+  --ink: #172c26;
+  --muted: #71817a;
+  --line: #e1e9e4;
+  --green: #247a5e;
+  --green-dark: #155c46;
+  --mint: #e8f6ee;
+  --amber: #a96e11;
+  --rose: #bd4e4a;
+  --nav: #122923;
+}
+
+body { background: #f4f7f5; color: var(--ink); font-size: 14px; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid rgba(48, 150, 111, .3);
+  outline-offset: 2px;
+}
+.appShell { background: linear-gradient(125deg, #f7f9f7 0%, #f2f6f3 100%); }
+.sidebar {
+  width: 252px;
+  padding: 28px 17px 18px;
+  background: linear-gradient(180deg, #142d26 0%, #10241f 100%);
+  border-right: 1px solid rgba(13, 35, 28, .7);
+}
+.brand { padding: 0 10px 40px; }
+.brandMark { height: 38px; width: 38px; border-radius: 12px; background: rgba(112, 211, 158, .08); }
+.brandName { font-size: 15px; }
+.brandSub { font-size: 9px; }
+.sideLabel { font-size: 10px; letter-spacing: .14em; }
+.sideNav { gap: 7px; }
+.navItem { min-height: 43px; border-radius: 10px; padding: 11px 13px; font-size: 13px; }
+.navItem.active { background: linear-gradient(100deg, #244c3e 0%, #1b3e33 100%); box-shadow: inset 3px 0 #70d49b; }
+.programCard { border-radius: 11px; padding: 12px 10px; }
+.workspaceFlag { font-size: 11px; }
+.sidebarFooter { font-size: 10px; }
+.mainArea { background: transparent; }
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: 68px;
+  padding: 0 clamp(20px, 3.2vw, 48px);
+  background: rgba(255, 255, 255, .88);
+  border-bottom-color: rgba(220, 230, 224, .9);
+  backdrop-filter: blur(14px);
+}
+.crumbs { font-size: 10px; }
+.topActions { gap: 13px; }
+.syntheticTag { padding: 8px 12px; font-size: 11px; }
+.iconButton { width: 36px; height: 36px; border-radius: 10px; }
+.avatar { width: 34px; height: 34px; font-size: 10px; }
+.pageContent { max-width: 1540px; padding: 38px clamp(22px, 3.2vw, 48px) 30px; }
+.pageHeading { gap: 24px; margin-bottom: 28px; }
+.eyebrow, .panelKicker { font-size: 10px; letter-spacing: .13em; }
+.pageHeading h1 { font-size: 33px; margin: 9px 0 7px; }
+.pageHeading p { font-size: 14px; line-height: 1.5; }
+.headingActions { gap: 10px; }
+.secondaryButton, .primaryButton { height: 42px; border-radius: 10px; padding: 0 15px; font-size: 12px; }
+.secondaryButton { border-color: #dce6e0; box-shadow: 0 2px 5px rgba(25, 51, 40, .03); }
+.primaryButton { background: linear-gradient(135deg, #23815f, #17634d); box-shadow: 0 5px 14px rgba(27, 107, 79, .16); }
+.primaryButton:hover { background: linear-gradient(135deg, #1c7354, #125640); transform: translateY(-1px); }
+.errorBanner { border-radius: 12px; padding: 15px 17px; margin-bottom: 20px; }
+.errorBanner strong { font-size: 13px; }
+.errorBanner span { font-size: 12px; }
+.toast { border-radius: 11px; padding: 12px 15px; font-size: 12px; }
+.loadingState { border-radius: 13px; padding: 34px; font-size: 13px; }
+.statGrid { gap: 16px; margin-bottom: 18px; }
+.statCard, .panel { border-radius: 15px; border-color: #e3ebe6; box-shadow: 0 5px 18px rgba(26, 55, 42, .045); }
+.statCard { min-height: 142px; padding: 19px 20px 17px; transition: transform .18s ease, box-shadow .18s ease; }
+.statCard:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(26, 55, 42, .08); }
+.statIcon { top: 18px; right: 18px; width: 36px; height: 36px; border-radius: 11px; }
+.statLabel { font-size: 12px; }
+.statValue { margin-top: 18px; font-size: 32px; }
+.statNote { margin-top: 4px; font-size: 11px; }
+.overviewGrid { gap: 18px; margin-bottom: 18px; }
+.panel { padding: 22px; }
+.panelKicker { font-size: 9px; }
+.panelHeading h2, .filterTitle h2, .findingPageIntro h2 { font-size: 18px; }
+.panelDescription { margin: 10px 0 20px; font-size: 12px; line-height: 1.55; }
+.infoTag { font-size: 10px; padding: 7px 10px; }
+.revisionList { gap: 17px; }
+.revisionMeta { margin-bottom: 9px; }
+.revisionName { font-size: 12px; min-width: 54px; }
+.muted { font-size: 11px; }
+.stackBar { height: 10px; }
+.revisionCounts { gap: 15px; margin-top: 8px; }
+.revisionCounts span, .panelLegend span { font-size: 10px; }
+.panelLegend { gap: 17px; padding-top: 14px; margin-top: 18px; }
+.dot { width: 7px; height: 7px; }
+.focusPanel { background: linear-gradient(145deg, #f4fbf6, #fbfefb); border-color: #d9eae0; padding: 22px 24px; }
+.focusPanel h2 { font-size: 19px; margin: 16px 0 8px; }
+.focusPanel > p { font-size: 12px; line-height: 1.65; }
+.focusMetric { gap: 15px; margin-top: 18px; padding: 14px 0; }
+.metricRing { height: 52px; width: 52px; font-size: 15px; }
+.focusMetric strong { font-size: 12px; }
+.focusMetric span { font-size: 10px; line-height: 1.45; }
+.focusFoot { font-size: 11px; padding-top: 14px; }
+.tablePanel { padding: 20px 0 0; }
+.tableHeading { padding: 0 22px 17px; }
+.linkButton { font-size: 11px; }
+thead { background: #f6f9f7; }
+th { font-size: 10px; padding: 12px 14px; }
+td { padding: 13px 14px; font-size: 11px; }
+th:first-child, td:first-child { padding-left: 22px; }
+.primaryCell { font-size: 12px; }
+.secondaryCell { font-size: 10px; }
+.revisionChip { border-radius: 7px; padding: 5px 8px; font-size: 10px; }
+.unit { font-size: 10px; }
+.statusPill { gap: 5px; padding: 5px 9px; font-size: 10px; }
+.lowerGrid { gap: 18px; margin-top: 18px; }
+.componentPanel, .attentionPanel { padding: 21px; }
+.countTag { font-size: 10px; padding: 6px 10px; }
+.componentList, .attentionList { margin-top: 13px; }
+.componentRow { min-height: 54px; gap: 11px; }
+.componentAvatar { width: 32px; height: 32px; border-radius: 9px; }
+.componentName strong, .attentionRow strong { font-size: 11px; }
+.componentName span, .attentionRow small { font-size: 10px; }
+.componentFindings { font-size: 10px; min-width: 42px; }
+.attentionRow { gap: 11px; padding: 11px 3px; }
+.attentionIcon { width: 30px; height: 30px; border-radius: 9px; }
+.queueButton { font-size: 11px; padding-top: 13px; }
+.comparisonPanel { padding: 20px 0 0; margin-top: 18px; }
+.comparisonPanel > .panelHeading, .comparisonPanel > .panelDescription { margin-left: 22px; margin-right: 22px; }
+.comparisonPanel > .panelDescription { margin-bottom: 15px; }
+.filterBar { padding: 20px 22px 17px; }
+.filterTitle h2 { font-size: 17px; }
+.searchBox, .selectBox { height: 40px; gap: 8px; padding: 0 11px; border-radius: 9px; }
+.searchBox input, .selectBox select, .selectBox { font-size: 11px; }
+.searchBox input { width: 220px; }
+.tableFoot { font-size: 10px; padding: 12px 22px; }
+.findingPageIntro { border-radius: 15px; padding: 23px; margin-bottom: 18px; }
+.findingPageIntro h2 { font-size: 20px; }
+.findingPageIntro p { font-size: 12px; line-height: 1.55; }
+.queueSummary { font-size: 11px; }
+.findingGrid { gap: 16px; }
+.findingCard { border-radius: 14px; box-shadow: 0 5px 18px rgba(26, 55, 42, .045); }
+.findingTopline, .findingContext, .recommendation, .findingFooter { font-size: 11px; }
+.findingMeasurement strong { font-size: 13px; }
+.recommendation { line-height: 1.55; padding: 11px; }
+.runLink, .textButton { font-size: 10px; }
+.pageFooter { font-size: 10px; padding: 26px 1px 6px; }
+.detailDrawer { padding: 26px; }
+.drawerMeta { font-size: 11px; }
+.drawerTags span { font-size: 10px; }
+.detailSectionTitle { font-size: 10px; }
+.detailMetrics { gap: 10px; }
+.detailMetrics > div { min-height: 75px; padding: 11px; border-radius: 9px; }
+.detailMetrics span, .detailMetrics em { font-size: 10px; }
+.detailMetrics strong { font-size: 17px; }
+.drawerFinding > div strong { font-size: 12px; }
+.drawerFinding p, .drawerDisclaimer { font-size: 10px; line-height: 1.55; }
+.drawerBottom { font-size: 10px; }
+
+@media (max-width: 1080px) {
+  .sidebar { width: 224px; }
+  .pageContent { padding-left: 28px; padding-right: 28px; }
+  .topBar { padding-left: 28px; padding-right: 28px; }
+  .overviewGrid { grid-template-columns: minmax(0, 1.25fr) minmax(280px, .9fr); }
+}
+@media (max-width: 800px) {
+  .sidebar {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 8;
+    width: auto;
+    min-height: 0;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    border-right: 0;
+    border-top: 1px solid rgba(220, 236, 226, .12);
+    box-shadow: 0 -8px 28px rgba(17, 42, 32, .18);
+    backdrop-filter: blur(16px);
+  }
+  .brand, .sideLabel, .sidebarBottom { display: none; }
+  .sideNav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .navItem, .navItem span { display: flex; }
+  .navItem { position: relative; min-height: 52px; flex-direction: column; justify-content: center; gap: 4px; padding: 6px; font-size: 10px; }
+  .navItem.active { box-shadow: none; }
+  .navItem b { display: grid; place-items: center; position: absolute; top: 2px; right: calc(50% - 27px); min-width: 17px; padding: 2px 5px; font-size: 9px; }
+  .mainArea { padding-bottom: 76px; }
+  .pageContent { padding: 30px 24px 24px; }
+  .topBar { height: 62px; padding: 0 22px; }
+  .pageHeading { align-items: flex-start; flex-direction: column; gap: 13px; margin-bottom: 22px; }
+  .headingActions { width: 100%; }
+  .overviewGrid, .lowerGrid { grid-template-columns: 1fr; }
+  .statGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .statCard { min-height: 132px; }
+}
+@media (max-width: 570px) {
+  .topBar { height: 58px; padding: 0 15px; }
+  .crumbs { font-size: 9px; gap: 7px; }
+  .syntheticTag { display: none; }
+  .pageContent { padding: 24px 15px 18px; }
+  .pageHeading { gap: 11px; margin-bottom: 18px; }
+  .eyebrow { font-size: 9px; }
+  .pageHeading h1 { font-size: 28px; }
+  .pageHeading p { font-size: 13px; }
+  .headingActions { gap: 8px; }
+  .secondaryButton, .primaryButton { min-width: 0; height: 42px; padding: 0 9px; font-size: 10px; gap: 6px; }
+  .statCard { min-height: 124px; padding: 15px; }
+  .statIcon { top: 13px; right: 13px; width: 31px; height: 31px; }
+  .statLabel { font-size: 11px; }
+  .statValue { margin-top: 17px; font-size: 28px; }
+  .statNote { font-size: 10px; }
+  .panel, .componentPanel, .attentionPanel { padding: 17px; }
+  .panelHeading h2, .filterTitle h2 { font-size: 16px; }
+  .panelDescription { font-size: 11px; }
+  .revisionCounts { flex-wrap: wrap; gap: 9px 13px; }
+  .revisionCounts span { font-size: 9px; }
+  .tablePanel, .comparisonPanel { padding-left: 0; padding-right: 0; }
+  .tableHeading { padding-left: 17px; padding-right: 17px; }
+  .comparisonPanel > .panelHeading, .comparisonPanel > .panelDescription { margin-left: 17px; margin-right: 17px; }
+  .filterBar { align-items: stretch; flex-direction: column; padding: 17px; }
+  .filterControls { width: 100%; }
+  .searchBox { flex: 1; min-width: 0; }
+  .searchBox input { width: 100%; min-width: 0; }
+  .findingGrid { grid-template-columns: 1fr; }
+  .findingPageIntro { align-items: flex-start; flex-direction: column; padding: 18px; }
+  .pageFooter { gap: 8px; flex-direction: column; font-size: 9px; }
+}
