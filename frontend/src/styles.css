@@ -285,6 +285,48 @@ tbody tr:last-child td { border-bottom: 0; }
 .deltaUp { color: #b24f49; font-weight: 700; }
 .deltaDown { color: #39835e; font-weight: 700; }
 
+/* Explainable anomaly signals and reproducible import lineage */
+.signalsPage { display: grid; gap: 18px; }
+.signalSummaryGrid { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(160px, .72fr)); gap: 16px; }
+.signalModelCard { position: relative; overflow: hidden; min-height: 142px; border: 1px solid #d9e9df; border-radius: 15px; padding: 19px 22px; background: radial-gradient(circle at 95% 0%, rgba(112,211,158,.2), transparent 36%), linear-gradient(135deg,#f5fbf7,#fff); box-shadow: 0 5px 18px rgba(26,55,42,.045); }
+.signalModelIcon { position: absolute; top: 17px; right: 18px; width: 37px; height: 37px; display: grid; place-items: center; border: 1px solid #d6e9dd; border-radius: 11px; background: #fff; color: #31835f; }
+.signalModelCard h2 { margin: 10px 50px 6px 0; color: #2d493a; font: 800 19px Manrope,sans-serif; letter-spacing: -.035em; }
+.signalModelCard p { max-width: 620px; margin: 0; color: #77877e; font-size: 11px; line-height: 1.55; }
+.modelMeta { display: flex; gap: 8px; margin-top: 11px; color: #64836f; font-size: 10px; }
+.signalNotice { display: flex; align-items: flex-start; gap: 10px; padding: 13px 16px; border: 1px solid #eee4cf; border-radius: 11px; background: #fffbf1; color: #8d7040; font-size: 11px; line-height: 1.55; }
+.signalNotice svg { flex: 0 0 auto; margin-top: 1px; }
+.signalPanel, .lineagePanel { padding: 20px 0 0; overflow: hidden; }
+.signalPanel > .panelDescription, .lineagePanel > .panelDescription { margin: -5px 22px 16px; }
+.anomalyScore { color: #597165; font: 800 16px Manrope,sans-serif; }
+.anomalyScore small { margin-left: 2px; color: #8a9890; font: 500 9px "DM Sans",sans-serif; }
+.anomalyScore.isOutlier { color: #b4524d; }
+.driverList { display: grid; gap: 5px; min-width: 180px; }
+.driverList span { display: flex; flex-direction: column; gap: 2px; }
+.driverList strong { color: #596d62; font-size: 10px; }
+.driverList small { color: #8a9890; font-size: 9px; }
+.hashCode { display: inline-block; max-width: 210px; overflow: hidden; text-overflow: ellipsis; color: #577468; border-radius: 5px; background: #f0f6f2; padding: 5px 7px; font-size: 9px; }
+@media (max-width: 1080px) {
+  .signalSummaryGrid { grid-template-columns: minmax(0, 1.25fr) repeat(2, minmax(135px, .75fr)); }
+}
+@media (max-width: 800px) {
+  .sideNav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .navItem { gap: 3px; font-size: 9px; }
+  .signalSummaryGrid { grid-template-columns: 1fr 1fr; }
+  .signalModelCard { grid-column: 1 / -1; }
+}
+@media (max-width: 570px) {
+  .signalsPage { gap: 13px; }
+  .signalSummaryGrid { gap: 9px; }
+  .signalModelCard { min-height: 160px; padding: 16px; }
+  .signalModelCard h2 { font-size: 17px; }
+  .signalModelCard p { max-width: 90%; font-size: 10px; }
+  .modelMeta { flex-wrap: wrap; font-size: 9px; }
+  .signalPanel, .lineagePanel { padding-top: 15px; }
+  .signalPanel > .panelDescription, .lineagePanel > .panelDescription { margin-left: 15px; margin-right: 15px; font-size: 10px; }
+  .signalPanel .tableHeading, .lineagePanel .tableHeading { padding-left: 15px; padding-right: 15px; }
+  .signalNotice { padding: 11px 12px; font-size: 10px; }
+}
+
 /* Refined responsive visual system */
 :root {
   color-scheme: light;
@@ -463,9 +505,9 @@ th:first-child, td:first-child { padding-left: 22px; }
     backdrop-filter: blur(16px);
   }
   .brand, .sideLabel, .sidebarBottom { display: none; }
-  .sideNav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .sideNav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
   .navItem, .navItem span { display: flex; }
-  .navItem { position: relative; min-height: 52px; flex-direction: column; justify-content: center; gap: 4px; padding: 6px; font-size: 10px; }
+  .navItem { position: relative; min-height: 52px; flex-direction: column; justify-content: center; gap: 4px; padding: 6px 3px; font-size: 9px; }
   .navItem.active { box-shadow: none; }
   .navItem b { display: grid; place-items: center; position: absolute; top: 2px; right: calc(50% - 27px); min-width: 17px; padding: 2px 5px; font-size: 9px; }
   .mainArea { padding-bottom: 76px; }

@@ -1,6 +1,6 @@
 # HMIE and Hyundai technology research
 
-Research date: November 12, 2026
+Research date: November 13, 2026
 
 ## What the supplied notification says
 
@@ -8,7 +8,7 @@ The attached notification describes a GET campus role at HMIE in Hyderabad. It l
 
 ## What HMIE publicly describes
 
-HMIE's About page describes engineering support for Hyundai and Kia R&D, with a focus on engineering services and quality enhancement. It names:
+HMIE's About page describes engineering support for Hyundai and Kia R&D, with a focus on engineering services and quality enhancement. Its current public summary confirms the R&D support and quality-enhancement context. The older role research captured in the campus notification and project notes also identifies:
 
 - Computer-aided design (CAD) and computer-aided engineering (CAE).
 - Automobile-part design, modeling analysis, and 3D CAD model data.
@@ -35,6 +35,10 @@ These are Group-level directions and should not be presented as the internal sta
 - The Group announced its Pleos software brand and software-defined vehicle and connected-mobility platform direction, including an in-vehicle software ecosystem and OTA capability. Official source: https://www.hyundai.com/worldwide/en/newsroom/detail/0000000921
 - Hyundai's innovation pages describe electrification and EV platform development, including IMA and E-GMP. Official source: https://www.hyundai.com/worldwide/en/company/innovation/electrification
 - A September 2026 Group announcement describes autonomous-driving data collection, AI training, validation and deployment; virtual validation; NVIDIA collaboration; and its proprietary Atria AI program. Official source: https://www.hyundai.com/worldwide/en/newsroom/detail/0000001273
+- In October 2026 the Group described plans for an AI data center supporting repeated data training and validation, with potential vehicle-R&D applications from crash testing and aerodynamic analysis to battery thermal management. Official source: https://www.hyundai.com/worldwide/en/newsroom/detail/0000001300
+- Hyundai Motor and Kia's NOVA Lab article says it is exploring AI-assisted identification of anomalies in continuously collected vehicle data as part of broader digital validation. Official source: https://org2.hyundai.com/worldwide/en/newsroom/detail/0000001255
+
+These releases support the project direction of data lineage and exploratory anomaly triage. They do not reveal the software stack of the Hyderabad GET team, specify an entry-level requirement, or imply that FEMTrace matches internal company systems.
 
 ## Project choice for a CSE applicant
 
@@ -44,5 +48,8 @@ FEMTrace focuses on the engineering domain HMIE itself documents: CAE, finite-el
 - Python/FastAPI validates input, persists runs/findings and exposes REST endpoints.
 - React/TypeScript presents review status, result evidence and revision deltas.
 - SQLite links components, runs, revisions, load cases and findings.
+- scikit-learn Isolation Forest ranks unusual normalized profiles, with median-absolute-deviation driver context. The model is fitted to this small dataset and has no supervised failure labels.
+- SHA-256 import fingerprints, row counts, schema version, and engine name make each CSV ingest more reproducible.
+- GitHub Actions compiles the C++ engine, checks Python compilation, and builds the TypeScript frontend.
 
 The stack used here is selected for this portfolio implementation. It is not represented as HMIE's complete internal stack. Synthetic values and example limits are not suitable for real design, safety, or certification decisions.

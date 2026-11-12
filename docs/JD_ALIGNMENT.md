@@ -25,8 +25,13 @@ HMIE's public company description identifies CAD/CAE work, HyperMesh-based finit
 | Engineering support | C++17 rules engine evaluates batches; Python/FastAPI serves runs and findings |
 | Traceability | SQLite preserves run IDs, revisions, load cases, review criteria and finding status |
 | Communication | React dashboard makes the review queue and evidence readable |
+| Digital validation signal | scikit-learn Isolation Forest ranks unusual profiles for human triage, with feature-level deviation context |
+| Data reproducibility | SHA-256 fingerprints and import metadata identify source files and how each batch was evaluated |
+| Delivery practice | GitHub Actions compiles the C++ engine, checks Python sources and builds the frontend |
 
 The project supports a discussion of data structures, API design, validation, SQL modeling, error handling, UI state, and how software can support an engineering team's review loop.
+
+The ML feature reflects a broader digital-validation direction visible in Hyundai Motor Group communications: data-driven AI validation and anomaly detection are discussed for vehicle development. This is Group-level context, not a claim about the Hyderabad GET team or an HMIE requirement. The project implements a small, unsupervised demo and is not validated against company data.
 
 ## Limits of this alignment
 

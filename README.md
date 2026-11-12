@@ -1,6 +1,6 @@
 # FEMTrace | CAE Validation Workbench
 
-A CSE portfolio project for automotive engineering quality workflows. FEMTrace ingests normalized finite-element analysis (FEA) result rows, applies explainable review criteria in a C++17 engine called by a Python API, compares design revisions, and records engineering follow-up.
+A CSE portfolio project for automotive engineering quality workflows. FEMTrace ingests normalized finite-element analysis (FEA) result rows, applies explainable review criteria in a C++17 engine called by a Python API, compares design revisions, uses an unsupervised model to surface unusual result profiles, and records import and review history.
 
 The supplied dataset is synthetic. It is for demonstrating a software workflow, not for vehicle design decisions, certification, or release.
 
@@ -21,15 +21,18 @@ Company-wide Hyundai Motor Group announcements also describe software-defined ve
 - Classifies each run as PASS, REVIEW, or FAIL and creates a finding that contains the measured value, limit, margin, and suggested investigation.
 - Shows outcome summaries by revision and numerical stress/displacement deltas between matching component/load-case revisions.
 - Keeps run and finding records in SQLite; users can mark findings reviewed.
+- Runs scikit-learn Isolation Forest over engineering-normalized ratios to rank unusual profiles, show robust-deviation drivers, and route them to a human reviewer.
+- Keeps a CSV import ledger with a SHA-256 content fingerprint, source filename, row counts, schema version, and evaluator engine.
 - Exposes a typed REST API and interactive API documentation at /docs.
 
 ## Technology stack
 
 - C++17 command-line engine for batch evaluation of engineering criteria.
-- Python 3.12, FastAPI, and Pydantic for CSV validation, API routing, and orchestration.
+- Python 3.12, FastAPI, Pydantic, and scikit-learn for CSV validation, API routing, orchestration, and unsupervised outlier triage.
 - SQLite for persistent run/finding records and traceability.
 - React 18, TypeScript, Vite, and Lucide for the review interface.
 - Docker Compose for the packaged deployment; its multi-stage build compiles the C++ engine.
+- GitHub Actions CI compiles the native engine and builds the API dependencies and frontend bundle on each push and pull request.
 
 HMIE's separate public experienced-software-developer listing names C/C++ and Python and mentions middleware API integration and Python tool development. That is adjacent company context, not a stated GET requirement. This project stack is a portfolio choice and not a claim about HMIE's complete internal stack.
 
@@ -97,7 +100,9 @@ Each run ID is unique. Repeated IDs are skipped, and the import reports how many
 - Any failed check makes the run FAIL; otherwise any review-band check makes it REVIEW; a run with all checks in range is PASS.
 - Findings are rule-based and explainable. No machine-learning model or proprietary solver integration is claimed.
 
-These are illustrative software demo rules. They are not HMIE, Hyundai, HyperMesh, or vehicle certification criteria.
+The AI Signals page fits an Isolation Forest to five ratios derived from stress, displacement, safety factor, modal frequency, and mass. Its displayed score is a relative percentile within the current dataset, not a probability. The top drivers are robust median absolute deviation comparisons; they are descriptive signals, not causal explanations. The model refits from the current run history when queried and has no labeled failure data.
+
+These are illustrative software demo rules and exploratory ML signals. They are not HMIE, Hyundai, HyperMesh, or vehicle certification criteria.
 
 ## Project layout
 
@@ -107,6 +112,15 @@ These are illustrative software demo rules. They are not HMIE, Hyundai, HyperMes
     frontend/src/styles.css      Responsive interface styling
     sample_data/                 CSV import example
     docs/                        HMIE alignment, company technology research and resume guidance
+    .github/workflows/ci.yml     Build checks for the C++ engine and React frontend
+
+## AI and provenance endpoints
+
+- `GET /api/ai/anomalies` refits Isolation Forest on stored runs and returns ranked outlier candidates with feature-level deviation indicators.
+- `GET /api/imports` lists recent successful CSV imports and their fingerprints.
+- `POST /api/runs/import` returns an import ID, SHA-256 fingerprint, row counts, schema version, and evaluator path in addition to the prior summary.
+
+The seeded records and criteria remain synthetic and illustrative. The outlier model is a demonstration of unsupervised triage on a small sample, not a validated predictive maintenance or engineering safety model.
 
 ## Portfolio and interview notes
 

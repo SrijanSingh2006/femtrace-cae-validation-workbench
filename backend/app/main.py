@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import math
 import os
@@ -17,6 +18,8 @@ from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from sklearn.ensemble import IsolationForest
+import sklearn
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -109,6 +112,17 @@ def initialize_database() -> None:
                 recommendation TEXT NOT NULL,
                 status TEXT NOT NULL DEFAULT 'Open',
                 UNIQUE(run_id, rule_name)
+            );
+            CREATE TABLE IF NOT EXISTS import_batches (
+                import_id TEXT PRIMARY KEY,
+                source_filename TEXT NOT NULL,
+                content_sha256 TEXT NOT NULL,
+                imported_at TEXT NOT NULL,
+                received_rows INTEGER NOT NULL,
+                inserted_rows INTEGER NOT NULL,
+                duplicate_rows INTEGER NOT NULL,
+                schema_version TEXT NOT NULL,
+                evaluator_engine TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_runs_component_date
                 ON simulation_runs(component, recorded_at DESC);
@@ -361,8 +375,8 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="FEMTrace CAE Validation Workbench",
-    version="1.0.0",
-    description="A synthetic-data portfolio project for explainable CAE result review.",
+    version="1.1.0",
+    description="A synthetic-data portfolio project for explainable CAE result review and exploratory anomaly triage.",
     lifespan=lifespan,
 )
 
@@ -504,6 +518,120 @@ def findings(status: str = Query(default="Open", pattern="^(all|Open|Resolved)$"
     return [dict(row) for row in rows]
 
 
+AI_FEATURES = [
+    ("stress_utilization", "Stress utilization", "% of allowable", "upper"),
+    ("displacement_utilization", "Displacement utilization", "% of limit", "upper"),
+    ("safety_factor_shortfall", "Safety-factor shortfall", "% of minimum", "upper"),
+    ("modal_shortfall", "Modal-frequency shortfall", "% of minimum", "upper"),
+    ("mass_deviation_pct", "Mass deviation", "% vs target", "signed"),
+]
+AI_MIN_SAMPLES = 8
+
+
+def ai_feature_values(row: sqlite3.Row) -> list[float]:
+    return [
+        row["max_stress_mpa"] / row["allowable_stress_mpa"] * 100,
+        row["max_displacement_mm"] / row["allowable_displacement_mm"] * 100,
+        row["minimum_safety_factor"] / row["safety_factor"] * 100,
+        row["minimum_mode_hz"] / row["first_mode_hz"] * 100,
+        (row["mass_kg"] - row["target_mass_kg"]) / row["target_mass_kg"] * 100,
+    ]
+
+
+@app.get("/api/ai/anomalies")
+def ai_anomalies(limit: int = Query(default=16, ge=1, le=100)) -> dict[str, Any]:
+    """Fit a transparent, unsupervised triage model to the available run history."""
+    with connect() as db:
+        rows = db.execute("SELECT * FROM simulation_runs ORDER BY recorded_at DESC").fetchall()
+    sample_count = len(rows)
+    response: dict[str, Any] = {
+        "model": "Isolation Forest",
+        "modelVersion": sklearn.__version__,
+        "featureNames": [item[1] for item in AI_FEATURES],
+        "sampleCount": sample_count,
+        "minimumSamples": AI_MIN_SAMPLES,
+        "isReady": sample_count >= AI_MIN_SAMPLES,
+        "flaggedCount": 0,
+        "rows": [],
+        "notice": "Exploratory triage only. This model has no labeled failure data and does not assess design safety or certify a component.",
+    }
+    if sample_count < AI_MIN_SAMPLES:
+        response["notice"] = (
+            f"Add at least {AI_MIN_SAMPLES - sample_count} more simulation runs to enable exploratory anomaly triage. "
+            + response["notice"]
+        )
+        return response
+
+    matrix = [ai_feature_values(row) for row in rows]
+    model = IsolationForest(
+        n_estimators=200,
+        max_samples=min(256, sample_count),
+        contamination="auto",
+        random_state=42,
+        n_jobs=1,
+    )
+    model.fit(matrix)
+    decision_scores = model.decision_function(matrix)
+    predictions = model.predict(matrix)
+    worst_first = sorted(range(sample_count), key=lambda idx: (float(decision_scores[idx]), rows[idx]["recorded_at"]))
+    anomaly_percentile: dict[int, float] = {}
+    if sample_count == 1:
+        anomaly_percentile[worst_first[0]] = 100.0
+    else:
+        for rank, idx in enumerate(worst_first):
+            anomaly_percentile[idx] = round((sample_count - rank - 1) / (sample_count - 1) * 100, 1)
+
+    medians: list[float] = []
+    deviations: list[float] = []
+    for col in range(len(AI_FEATURES)):
+        column = sorted(values[col] for values in matrix)
+        middle = sample_count // 2
+        median = column[middle] if sample_count % 2 else (column[middle - 1] + column[middle]) / 2
+        abs_diffs = sorted(abs(value - median) for value in column)
+        mad = abs_diffs[middle] if sample_count % 2 else (abs_diffs[middle - 1] + abs_diffs[middle]) / 2
+        medians.append(median)
+        deviations.append(mad * 1.4826 if mad > 1e-9 else max(abs(median) * 0.05, 1e-6))
+
+    ranked: list[dict[str, Any]] = []
+    for idx, row in enumerate(rows):
+        values = matrix[idx]
+        drivers = []
+        for col, feature in enumerate(AI_FEATURES):
+            deviation_mad = abs(values[col] - medians[col]) / deviations[col]
+            drivers.append({
+                "key": feature[0],
+                "label": feature[1],
+                "value": round(values[col], 2),
+                "unit": feature[2],
+                "deviationMad": round(deviation_mad, 2),
+            })
+        drivers.sort(key=lambda item: item["deviationMad"], reverse=True)
+        ranked.append({
+            "run_id": row["run_id"],
+            "component": row["component"],
+            "design_revision": row["design_revision"],
+            "load_case": row["load_case"],
+            "recorded_at": row["recorded_at"],
+            "status": row["status"],
+            "anomaly_score": anomaly_percentile[idx],
+            "is_anomaly": bool(predictions[idx] == -1),
+            "drivers": drivers[:3],
+        })
+    ranked.sort(key=lambda item: (not item["is_anomaly"], -item["anomaly_score"]))
+    response["flaggedCount"] = sum(1 for value in predictions if value == -1)
+    response["rows"] = ranked[:limit]
+    return response
+
+
+@app.get("/api/imports")
+def import_history(limit: int = Query(default=12, ge=1, le=50)) -> list[dict[str, Any]]:
+    with connect() as db:
+        rows = db.execute(
+            "SELECT * FROM import_batches ORDER BY imported_at DESC LIMIT ?", (limit,)
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
 @app.post("/api/findings/{finding_id}/resolve")
 def resolve_finding(finding_id: str) -> dict[str, Any]:
     with connect() as db:
@@ -563,10 +691,33 @@ async def import_runs(file: UploadFile = File(...)) -> dict[str, Any]:
 
     evaluations = evaluate_batch(parsed)
     inserted = 0
+    import_id = str(uuid.uuid4())
+    imported_at = datetime.now(timezone.utc).isoformat()
+    source_filename = Path(file.filename).name[:255]
+    content_sha256 = hashlib.sha256(content).hexdigest()
     with connect() as db:
         for run, evaluation in zip(parsed, evaluations):
             inserted += int(save_run(db, run, evaluation))
+        db.execute(
+            """
+            INSERT INTO import_batches (
+                import_id, source_filename, content_sha256, imported_at,
+                received_rows, inserted_rows, duplicate_rows, schema_version, evaluator_engine
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                import_id, source_filename, content_sha256, imported_at,
+                len(parsed), inserted, len(parsed) - inserted, "1.0",
+                "C++17" if ENGINE_PATH.is_file() else "Python fallback",
+            ),
+        )
     return {
+        "importId": import_id,
+        "sourceFilename": source_filename,
+        "contentSha256": content_sha256,
+        "importedAt": imported_at,
+        "schemaVersion": "1.0",
+        "evaluatorEngine": "C++17" if ENGINE_PATH.is_file() else "Python fallback",
         "received": len(parsed),
         "inserted": inserted,
         "duplicatesSkipped": len(parsed) - inserted,

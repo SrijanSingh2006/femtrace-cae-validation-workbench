@@ -2,7 +2,7 @@
 
 ## 45-second project explanation
 
-“I built FEMTrace as a CSE portfolio project around automotive CAE quality workflows. It accepts a normalized CSV of simulation runs, checks the reported stress, displacement, safety factor, first-mode frequency, and mass against the limits supplied with each run, and records review findings with the source run and design revision. A C++17 engine evaluates rows in batches; a Python/FastAPI service handles validation, persistence and REST access; and a React dashboard summarizes outcomes and revision deltas. The sample data and criteria are synthetic, so the tool demonstrates a software workflow rather than making a real design or certification decision.”
+"I built FEMTrace as a CSE portfolio project around automotive CAE quality workflows. It accepts a normalized CSV of simulation runs, checks stress, displacement, safety factor, modal frequency and mass against supplied limits, compares revisions, and records findings. A C++17 batch engine and Python/FastAPI service power a React dashboard. I also added a scikit-learn Isolation Forest for exploratory outlier triage and a SHA-256 import ledger for data lineage. The example data and criteria are synthetic, so this demonstrates a software workflow rather than a real design or certification decision."
 
 ## Why this project for HMIE?
 
@@ -10,9 +10,13 @@
 
 ## Likely technical questions
 
-### Why use rule-based evaluation rather than machine learning?
+### Why keep rules if the project now includes machine learning?
 
-The rules need to be inspectable and traceable to stated limits. A reviewer can see the exact measurement, limit, margin and recommendation. Synthetic data is not a sound basis for claiming a predictive model.
+Rules remain the authoritative check because they map a measured value to an explicit limit and produce an inspectable finding. Isolation Forest is a separate, unsupervised triage signal: it ranks unusual combinations of normalized metrics without failure labels. The sample is small and synthetic, so the signal is not a calibrated probability, a causal explanation, a failure prediction, or a safety decision. A human reviewer must inspect it.
+
+### How does the anomaly ranking work?
+
+The API refits a deterministic scikit-learn Isolation Forest on stress and displacement utilization, safety-factor and modal-frequency shortfall ratios, and mass deviation. It reports each run's relative anomaly percentile within the current dataset. For context, it ranks the input metrics by robust median absolute deviation from their dataset medians. These are model-level ranking and descriptive driver indicators, not SHAP values or causal attributions.
 
 ### Why implement the evaluator in C++ and the API in Python?
 
@@ -32,7 +36,7 @@ FEMTrace intentionally starts with a vendor-neutral normalized CSV contract and 
 
 ### What would you add next?
 
-I would clarify the actual team's review process and data contract first. Candidate improvements include authenticated roles, configuration-managed criteria, signed review history, automated reports, import provenance, unit normalization, reference-case validation, and approved adapters. I would assess a production database and deployment environment with engineering stakeholders.
+I would validate the data contract and model behavior against approved, representative historical data before considering operational use. Then I would add versioned criteria, authenticated reviewer roles, unit normalization, reference-case validation, and a vetted solver adapter. I would also plan a production database and deployment environment with engineering stakeholders.
 
 ## Demo flow
 
@@ -40,5 +44,7 @@ I would clarify the actual team's review process and data contract first. Candid
 2. Show revision outcomes and the matched component/load-case delta table.
 3. Open a failed run to show the measured value, supplied limit, and finding.
 4. Import sample_data/fea_results_template.csv.
-5. Explain the C++ batch evaluator, Python API, and SQLite schema.
-6. State clearly that this workbench does not run HyperMesh, execute FEA, or certify a component.
+5. Open AI Signals and explain why the score is relative and exploratory; point out the input driver details.
+6. Show the import ledger and explain its SHA-256 fingerprint, row counts and evaluator version.
+7. Explain the C++ batch evaluator, Python API, SQLite schema and GitHub Actions build workflow.
+8. State clearly that this workbench does not run HyperMesh, execute FEA, or certify a component.

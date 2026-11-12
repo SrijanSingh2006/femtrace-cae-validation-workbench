@@ -4,23 +4,26 @@ import {
   AlertCircle,
   ArrowDownToLine,
   ArrowUpRight,
+  BrainCircuit,
   Check,
   ChevronDown,
   ClipboardCheck,
   Database,
   FileUp,
+  Fingerprint,
   Gauge,
   Layers3,
   RefreshCw,
   Search,
   ShieldCheck,
+  ScanSearch,
   SlidersHorizontal,
   TriangleAlert,
   X,
 } from "lucide-react";
 
 type RunStatus = "PASS" | "REVIEW" | "FAIL";
-type TabKey = "overview" | "runs" | "findings";
+type TabKey = "overview" | "runs" | "findings" | "signals";
 
 type Run = {
   run_id: string;
@@ -106,6 +109,42 @@ type Comparison = {
   mass_delta_pct: number;
   previous_status: RunStatus;
   current_status: RunStatus;
+};
+
+type AiSignal = {
+  run_id: string;
+  component: string;
+  design_revision: string;
+  load_case: string;
+  recorded_at: string;
+  status: RunStatus;
+  anomaly_score: number;
+  is_anomaly: boolean;
+  drivers: { key: string; label: string; value: number; unit: string; deviationMad: number }[];
+};
+
+type AiAnalysis = {
+  model: string;
+  modelVersion: string;
+  featureNames: string[];
+  sampleCount: number;
+  minimumSamples: number;
+  isReady: boolean;
+  flaggedCount: number;
+  rows: AiSignal[];
+  notice: string;
+};
+
+type ImportBatch = {
+  import_id: string;
+  source_filename: string;
+  content_sha256: string;
+  imported_at: string;
+  received_rows: number;
+  inserted_rows: number;
+  duplicate_rows: number;
+  schema_version: string;
+  evaluator_engine: string;
 };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -291,6 +330,8 @@ export default function App() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [findings, setFindings] = useState<Finding[]>([]);
   const [comparisons, setComparisons] = useState<Comparison[]>([]);
+  const [aiAnalysis, setAiAnalysis] = useState<AiAnalysis | null>(null);
+  const [importHistory, setImportHistory] = useState<ImportBatch[]>([]);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -303,18 +344,22 @@ export default function App() {
   async function refresh() {
     setRefreshing(true);
     try {
-      const [summaryData, componentData, runData, findingData, comparisonData] = await Promise.all([
+      const [summaryData, componentData, runData, findingData, comparisonData, aiData, importsData] = await Promise.all([
         api<Summary>("/api/summary"),
         api<ComponentRow[]>("/api/components"),
         api<Run[]>("/api/runs"),
         api<Finding[]>("/api/findings"),
         api<Comparison[]>("/api/comparisons?limit=24"),
+        api<AiAnalysis>("/api/ai/anomalies?limit=16"),
+        api<ImportBatch[]>("/api/imports?limit=12"),
       ]);
       setSummary(summaryData);
       setComponents(componentData);
       setRuns(runData);
       setFindings(findingData);
       setComparisons(comparisonData);
+      setAiAnalysis(aiData);
+      setImportHistory(importsData);
       setError("");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Could not reach the FEMTrace API.");
@@ -345,8 +390,12 @@ export default function App() {
   }, [runs, search, statusFilter]);
 
   async function openRun(run: Run) {
+    await openRunId(run.run_id);
+  }
+
+  async function openRunId(runId: string) {
     try {
-      const detail = await api<RunDetail>("/api/runs/" + encodeURIComponent(run.run_id));
+      const detail = await api<RunDetail>("/api/runs/" + encodeURIComponent(runId));
       setSelected(detail);
     } catch (reason) {
       setToast(reason instanceof Error ? reason.message : "Could not load run details.");
@@ -394,6 +443,7 @@ export default function App() {
     { key: "overview", label: "Overview", icon: Gauge },
     { key: "runs", label: "CAE runs", icon: Layers3 },
     { key: "findings", label: "Finding queue", icon: ClipboardCheck, count: summary?.openFindings },
+    { key: "signals", label: "AI signals", icon: BrainCircuit, count: aiAnalysis?.flaggedCount },
   ];
 
   return (
@@ -427,7 +477,7 @@ export default function App() {
             <ChevronDown size={14} className="programChevron" />
           </div>
           <div className="workspaceFlag"><span className="liveDot" /> Demo workspace</div>
-          <div className="sidebarFooter">FEMTRACE <span>v1.0.0</span></div>
+          <div className="sidebarFooter">FEMTRACE <span>v1.1.0</span></div>
         </div>
       </aside>
 
@@ -447,13 +497,15 @@ export default function App() {
           <section className="pageHeading">
             <div>
               <div className="eyebrow">CAE RESULT REVIEW <span>•</span> DESIGN QUALITY</div>
-              <h1>{tab === "overview" ? "Engineering overview" : tab === "runs" ? "Simulation runs" : "Engineering findings"}</h1>
+              <h1>{tab === "overview" ? "Engineering overview" : tab === "runs" ? "Simulation runs" : tab === "findings" ? "Engineering findings" : "AI engineering signals"}</h1>
               <p>
                 {tab === "overview"
                   ? "A review trail from simulation output to an actionable design decision."
                   : tab === "runs"
                     ? "Search runs, compare revisions and inspect the criteria applied to each result."
-                    : "Prioritize out-of-envelope results and record the review action for each finding."}
+                    : tab === "findings"
+                      ? "Prioritize out-of-envelope results and record the review action for each finding."
+                      : "Use an explainable unsupervised model to surface unusual patterns for human review."}
               </p>
             </div>
             <div className="headingActions">
@@ -660,6 +712,81 @@ export default function App() {
                     ))}
                     {findings.length === 0 && <div className="emptyFindings"><Check size={24} /><h3>Queue is clear</h3><p>New findings will appear when an imported result leaves its review envelope.</p></div>}
                   </div>
+                </section>
+              )}
+
+              {tab === "signals" && aiAnalysis && (
+                <section className="signalsPage">
+                  <section className="signalSummaryGrid">
+                    <article className="signalModelCard">
+                      <div className="signalModelIcon"><BrainCircuit size={22} /></div>
+                      <div className="panelKicker">UNSUPERVISED TRIAGE MODEL</div>
+                      <h2>{aiAnalysis.model}</h2>
+                      <p>Fits an Isolation Forest to normalized engineering indicators from the available run history. No labeled pass/fail examples are used for training.</p>
+                      <div className="modelMeta"><span>scikit-learn {aiAnalysis.modelVersion}</span><span>·</span><span>Fixed seed · 200 trees</span></div>
+                    </article>
+                    <StatCard label="Runs analyzed" value={aiAnalysis.sampleCount} note="current run history" icon={Database} tone="slate" />
+                    <StatCard label="Outlier signals" value={aiAnalysis.isReady ? aiAnalysis.flaggedCount : "—"} note={aiAnalysis.isReady ? "ranked for human triage" : "need at least 8 runs"} icon={ScanSearch} tone="amber" />
+                  </section>
+
+                  <div className="signalNotice"><TriangleAlert size={17} /><span>{aiAnalysis.notice}</span></div>
+
+                  <section className="panel signalPanel">
+                    <div className="panelHeading tableHeading">
+                      <div>
+                        <div className="panelKicker"><ScanSearch size={14} /> PATTERN REVIEW</div>
+                        <h2>Runs with unusual profiles</h2>
+                      </div>
+                      <span className="infoTag"><span className="liveDot" /> Relative ranking · not probability</span>
+                    </div>
+                    <p className="panelDescription">An outlier means a run differs from this dataset’s patterns. Driver values are robust median absolute deviation comparisons, not causal explanations.</p>
+                    <div className="tableWrap">
+                      <table>
+                        <thead><tr><th>Run / component</th><th>Profile score</th><th>Rules result</th><th>Largest relative differences</th><th>Recorded</th></tr></thead>
+                        <tbody>
+                          {aiAnalysis.rows.map((item) => (
+                            <tr key={item.run_id} className="clickableRow" onClick={() => void openRunId(item.run_id)}>
+                              <td><div className="primaryCell">{item.component}</div><div className="secondaryCell">{item.run_id} · {item.design_revision} · {item.load_case}</div></td>
+                              <td><span className={"anomalyScore " + (item.is_anomaly ? "isOutlier" : "")}>{item.anomaly_score}<small>/100</small></span><div className="secondaryCell">{item.is_anomaly ? "Model flagged" : "Within model envelope"}</div></td>
+                              <td><StatusPill status={item.status} /></td>
+                              <td><div className="driverList">{item.drivers.slice(0, 2).map((driver) => <span key={driver.key}><strong>{driver.label}</strong><small>{driver.value.toFixed(1)} {driver.unit} · {driver.deviationMad.toFixed(1)} MAD</small></span>)}</div></td>
+                              <td>{fmtDate(item.recorded_at)}</td>
+                            </tr>
+                          ))}
+                          {aiAnalysis.rows.length === 0 && <tr><td colSpan={5} className="emptyCell">No runs are available for the model yet.</td></tr>}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="tableFoot"><span>Features: {aiAnalysis.featureNames.join(" · ")}</span><span>Re-fit on refresh</span></div>
+                  </section>
+
+                  <section className="panel lineagePanel">
+                    <div className="panelHeading tableHeading">
+                      <div>
+                        <div className="panelKicker"><Fingerprint size={14} /> DATA LINEAGE</div>
+                        <h2>CSV import history</h2>
+                      </div>
+                      <span className="countTag">{importHistory.length} recent imports</span>
+                    </div>
+                    <p className="panelDescription">Each successful import stores a SHA-256 content fingerprint, row counts, schema version and evaluator path for reproducibility.</p>
+                    <div className="tableWrap">
+                      <table>
+                        <thead><tr><th>Source file</th><th>SHA-256 fingerprint</th><th>Rows</th><th>Engine / schema</th><th>Imported at</th></tr></thead>
+                        <tbody>
+                          {importHistory.map((batch) => (
+                            <tr key={batch.import_id}>
+                              <td><div className="primaryCell">{batch.source_filename}</div><div className="secondaryCell">ID {batch.import_id.slice(0, 8)}</div></td>
+                              <td><code className="hashCode" title={batch.content_sha256}>{batch.content_sha256.slice(0, 18)}…{batch.content_sha256.slice(-8)}</code></td>
+                              <td>{batch.inserted_rows} added <span className="secondaryCell">· {batch.duplicate_rows} duplicate of {batch.received_rows}</span></td>
+                              <td>{batch.evaluator_engine}<div className="secondaryCell">schema {batch.schema_version}</div></td>
+                              <td>{fmtDate(batch.imported_at)}</td>
+                            </tr>
+                          ))}
+                          {importHistory.length === 0 && <tr><td colSpan={5} className="emptyCell">Successful file imports will appear here with their content fingerprint and processing details.</td></tr>}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
                 </section>
               )}
             </>
