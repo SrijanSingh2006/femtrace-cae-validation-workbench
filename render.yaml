@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: femtrace-cae-workbench
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: FEMTRACE_DATA_DIR
+        value: /data

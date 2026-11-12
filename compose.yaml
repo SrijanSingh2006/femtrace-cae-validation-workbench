@@ -1,0 +1,14 @@
+services:
+  femtrace:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      FEMTRACE_DATA_DIR: /data
+      FEMTRACE_STATIC_DIR: /app/static
+    volumes:
+      - femtrace-data:/data
+    restart: unless-stopped
+
+volumes:
+  femtrace-data:
